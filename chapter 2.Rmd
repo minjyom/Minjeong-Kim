@@ -1,0 +1,341 @@
+---
+title: "chapter 2"
+output:
+  html_document:
+    df_print: paged
+date: '2022-07-19'
+---
+
+
+?? how to set working directory much more easier ??
+```{r}
+rm()
+setwd("../data")
+list.files()
+```
+```{r}
+library(tidyverse)
+library(tibble)
+library(readr)
+library(dplyr)
+library(magrittr)
+library(ggplot2)
+```
+## tibble and readr package
+
+```{r}
+# read.csv() function: it shows factor vectors rather than chr vector. why? 
+nettle <- read.csv('nettle_1999_climate.csv') 
+nettle <- as_tibble(nettle)
+nettle
+```
+
+```{r}
+# to use readr package. read_csv() runs faster than read.csv()
+nettle <- read_csv('nettle_1999_climate.csv') 
+nettle
+```
+# delim argument specifies the type of separator. 
+
+```{r}
+# You can use this function with files are not comma-separated files (.csv)
+x <- read_delim('example_file.txt', delim = '\t')
+x
+```
+In the book, the data presents int, not dbl why?
+
+## dplyr
+
+# filter() function filters "rows". 
+# first argument: tibble, second argument: logical statement
+
+```{r}
+# reduces the nettlb tibble to only those rows with countries that have more than 500 languages
+filter(nettle, Langs > 500)
+```
+
+```{r}
+# may be interested in the data for a specific row, such as Nepal:
+filter(nettle, Country == 'Nepal')
+```
+
+
+# select function: to select "columns" 
+
+```{r}
+# to select Langs and Country columns
+select (nettle, Langs, Country)
+```
+```{r}
+# to remove certain column
+select (nettle, -Country)
+```
+
+```{r}
+# to select consecutive columns
+select(nettle, Area:Langs)
+```
+
+
+# rename () function: to change the name of existing columns
+
+```{r}
+nettle <- rename(nettle, Pop = Population)
+nettle 
+```
+# mutate () function: to change the content of a tibble. 
+```{r}
+# this command creates a new columns, 
+# which is specified to be the "Langs" column divided by 100
+
+nettle <- mutate(nettle, Lang100 = Langs / 100)
+nettle 
+```
+
+# arrange () function: to order tibble in ascending or descending order.
+
+```{r}
+# ascending (default)
+arrange (nettle, Langs) 
+```
+
+```{r}
+# descending
+arrange (nettle, desc(Langs))
+```
+
+## ggplot2 package 
+
+Nettle (1999) discusses that linguistic diversity is correlated with climate 
+factors. The proposal is that countries with lower ecological risk have more
+different languages than countries with higher ecological risk.
+
+Nettle (1999) measured ecological risk by 'mean growing season' (listed in the 
+MSG column).
+
+Langs = the number of languages
+MGS = the mean growing season 
+
+# create a point plot 
+
+```{r}
+# the first argument of ggplot() function: tibble
+# geom_point () function adds a point geom to the plot
+# aes() specifies the 'aesthetic mapping' 
+# ; which aspect of the data is mapped onto with aspect of the geom
+
+# This code below specifies "aes" inside a geom
+
+ggplot(nettle) +    
+  geom_point(mapping = aes (x = MGS, y = Langs))
+```
+```{r}
+# Paraphrased 
+# This code below specifies "aes" inside the main ggplot() function call. 
+
+ggplot(nettle, aes (x = MGS, y = Langs))+
+  geom_point()
+```
+
+# create a text plot instead of points
+
+ggplot(nettle, aes (x = MGS, y = Langs))+
+  geom_text()
+```
+
+```{r}
+# ERROR showed! 
+# needs an additional aesthetic mapping
+# which column is mapped to the actual text shown in the plot
+
+ggplot(nettle, aes (x = MGS, y = Langs, label = Country))+
+  geom_text()
+
+ggsave('nettle.png')
+# ggsave('nettle.png', width = 8, height = 6) occurs error unlike the result in 
+# the book
+
+```
+
+# gridExtra package: create the two plot aggrangement
+
+```{r}
+plot1 <- ggplot(nettle) +
+  geom_point (mapping = aes (x = MGS, y = Langs))
+
+plot2 <- ggplot (nettle, 
+                 aes (x = MGS, y = Langs, label = Country)) +
+  geom_text()
+```
+
+```{r}
+# plot double plot: 
+
+# add this code
+library(gridExtra) # error occurs
+grid.arrange(plot1, plot2, ncol = 2)
+```
+
+
+## Piping with magrittr
+
+pipe: %>% (shortcut: ctrl+shift+m)
+
+```{r}
+nettle %>% 
+  filter(MGS > 8) %>% 
+  ggplot(aes(x = MGS, y = Langs, label = Country)) +
+  geom_text()
+```
+
+## Iconicity and the Senses: a more extensive example
+
+```{r}
+icon <- read_csv('perry_winter_2017_iconicity.csv')
+mod <- read_csv('lynott_connell_2009_modality.csv')
+
+icon
+mod
+```
+
+# Select columns 
+
+```{r}
+icon <- select(icon, Word, POS, Iconicity)
+icon
+```
+
+The dataset contain 3001 words and their iconicity rating. 
+POS: part-of-speech tags
+
+Iconicity: 
+the linguistic form evokes some properties of referent, 
+as it is the case in onomatopoeic words (e.g., “boom”, “quack”)
+
+Iconicity rating task: 
+scale from -5 ('the word sounds like the the opposite of what it means')
+to +5 ('the word sounds exactly like what it means')
+
+# range of scale 
+
+```{r}
+range(icon$Iconicity)
+```
+
+# Let's draw histogram
+
+```{r}
+ggplot(icon, aes(x = Iconicity)) +                              # x-values
+  geom_histogram(fill = 'peachpuff3') +                         # fill = colour
+  geom_vline(aes(xintercept = 0), linetype = 2) +               
+  theme_minimal()                                               
+
+```
+# Extended version of tibble
+ 
+```{r}
+mod %>% print(n = Inf)
+```
+
+# Select columns
+
+```{r}
+mod <- select(mod, Word, DominantModality:Smell)
+mod
+```
+
+# Rename a column
+
+```{r}
+mod <- rename(mod, Modality = DominantModality)
+mod
+```
+
+# check random rows
+
+```{r}
+sample_n(mod, 4)
+```
+
+# merge two tibbles (joining by word)
+
+```{r}
+both <- left_join(icon, mod)
+both
+```
+
+# Let's filter the dataset including adjectives, verbs, and nouns
+%in% function need two vectors to compare, and check whether the elecments of 
+the second vector are matched in the first vector.
+
+The result is logical statement. 
+
+```{r}
+both <- filter (both, 
+                POS %in% c('Adjective', 'Verb', 'Noun'))
+both
+```
+
+# Let's make a boxplot
+*x-axis* = Modality 
+*y-axis* = Iconicity 
+*Modality* caterories onto the *fill* argument, which assigns each sensory 
+modality a unique colour. 
+```{r}
+ggplot(both, 
+       aes (x = Modality, y = Iconicity, fill = Modality)) +
+  geom_boxplot() + theme_minimal()
+```
+
+- Gustatory: taste-related
+- Haptic: touch-related
+- Olfactory: smell-related
+
+# Remove unnecessary data using filter
+*is.na* function check if the value is NA (logical statement)
+*!* means negation.
+
+```{r}
+both %>% filter(!is.na(Modality)) %>% 
+  ggplot(aes (x= Modality, y = Iconicity, 
+              fill = Modality)) +
+  geom_boxplot() + theme_minimal()
+```
+
+# Have a look at the counts of words per sesory modality 
+```{r}
+both %>% count(Modality)
+```
+
+# Exclude an NA row
+```{r}
+both %>% count(Modality) %>% 
+  filter(!is.na(Modality))
+```
+
+# Let's make a bar plot.
+- stat="identity" : y축에 명시한 값을 기준으로 그래프로 표현
+```{r}
+both %>% count(Modality) %>% 
+  filter(!is.na(Modality)) %>% 
+  ggplot(aes(x = Modality, y = n, fill = Modality)) +              # n의 의미? 
+  geom_bar(stat = 'identity') + theme_minimal()               
+```
+- stat = 'count'는 count에 명시된 값을 기준으로 그래프를 표현 
+- (aes 안에 y 축을 표시할 필요 없음)
+```{r}
+both %>% filter(!is.na(Modality)) %>% 
+  ggplot(aes(Modality, fill = Modality)) +
+  geom_bar(stat = 'count') + theme_minimal() 
+```
+
+## How to use R markdown
+
+```{r}
+# R code goes in here
+```
+
+```{r message = FALSE, cache=TRUE}
+# R code goes in here
+```
+
